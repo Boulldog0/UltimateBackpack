@@ -1,0 +1,87 @@
+use-prefix: true
+prefix: '&8[&6Backpack&8] &r'
+
+item:
+  #The backpack item material.
+  backpack-item: 'PLAYER_HEAD'
+  #The backpack item data. Let 0 if item dosnt have item data.
+  item-data: 0
+  #The custom name of the given backpack with command /backpack giveitem or when player join if give-item-on-join is set to true.
+  custom-name: '&6Custom Backpack Head'
+  #Define if you want to verify the name of the item before opening backpack. Useful if you use player heads, for example.
+  can-have-custom-name: true
+  #Define the custom lores of item if you want
+  custom-lore:
+    - '&7This is a custom head'
+  #The base64 texture code of head. You can find that here : https://minecraft-heads.com (it's "value" in developers part.)
+  head-texture-base64: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNjVjMTUwZmYzODMxOTdlYjk4MzU3YTFhZGQ0NWU1OTQwODY3ODQ1ODY5OTM2MWM2MDllODAzODNiNWJlMjhkNiJ9fX0='
+
+#Set here the sounds used when player open or close his backpack. You can find the soundname here : https://www.digminecraft.com/lists/sound_list_pc.php.
+#Let it empty if you not want to use that.
+sound-on-open: ''
+sound-on-close: ''
+
+#Define the name of the backpack GUI. Use %p to replace with playername.
+backpack-name: '&6Backpack of %p'
+#Define the name of the backpack GUI in admin side. Use %p to replace with owner playername.
+backpack-other-name: '&6Backpack of %p &c(Admin)'
+
+#Define if you want to remove backpack extra rows when player use his backpack. This option not delete the items in extra slots, but just not generate extra rows in the backpack GUI
+remove-non-permission-rows: true
+#Define if you want to give the backpack item when player log-in. The item is not given if player already has that in his inventory.
+give-item-on-join: false
+#Define if you want to prevent the drop of backpack item.
+disable-backpack-drop: false
+
+#Define the list of items/blocs blacklisted in the backpack.
+blacklist-items:
+  - "BEDROCK"
+
+hit-cooldown:
+  #Define if you want to use the hit cooldown. If it is enable, when player hit another player or receive damage of another player, a cooldown of x seconds starts, where the player will be cant open his backpack.
+  enable: true
+  #Define the cooldown (in seconds) when the player will be cant open his backpack after an hit, if hit-cooldown is enable.
+  cooldown: 15
+
+#Define the list of the name of worlds where the backpack will be disabled.
+disable-backpack-worlds:
+  - "EXAMPLE_WORLD"
+  
+#Define the list of the name of worldguard regions where the backpack will be disabled.
+disable-backpack-regions:
+  - "EXAMPLE_REGION"
+
+messages:
+  no-permission: '&cYou have not permission to do this.'
+  unknow-player: '&cUnknow player.'
+  backpack-restricted: '&cYour backpack is currently inspected by an administrator.'
+  backpack-closed-by-admin: '&cYour backpack has closed by an administrator.'
+  backpack-restricted: '&cYour backpack is currently inspected by an administrator. You cant open it.'
+  upgrade-system-disable: '&cThe upgrade feature is deactivated. Your backpack has automatically upgrade.'
+  error: '&cAn error occured when trying to open your backpack. Please contact an administrator for patch it.'
+  backpack-already-upgrade-to-max: '&cYour backpack is already upgrate to max.'
+  vault-not-found: '&cVault not found. Economy feature cant works.'
+  not-enought-money: '&cYou have not enought money for upgrade !'
+  item-given: '&aBackpack given with success !'
+  cant-open-your-backpack: "&cYou cant open your backpack with command /backpack open 'your-pseudo' !"
+  item-blacklist: "&cThis item is blacklist ! You can't put it in your backpack."
+  backpack-hit-cooldown: "&cYou have an hit cooldown. Please wait %s seconds."
+  item-cant-be-drop: "&cThe backpack item cant be drop !"
+  backpack-disable-in-world: "&cThe backpack is disable in this world !"
+  backpack-disable-in-region: "&cThe backpack is disabled in one of region where you are !"
+  backpack-already-inspected: "&cThis backpack is already inspected by an other administrator !"
+  cant-put-backpack-into-backpack: "&cYou cant put your backpack item into the backpack GUI !"
+
+help-message:
+  - "&7------[&eBackpackPlugin Help&7]------"
+  - "&e- /backpack help &7>> &6Open this page"
+  - "&e- /backpack open &7>> &6Open our backpack"
+  - "&e- /backpack open (player) &7>> &6Open the backpack of other player"
+  - "&e- /backpack upgrade &7>> &6Upgrade our backpack"
+  - "&e- /backpack giveitem &7>> &6Give the backpack item"
+
+upgrade:
+  #Upgrade system, set UPGRADE for use the upgrade system with command, and AUTOMATIC for upgrade automatically the player's backpack.
+  upgrade-system: "AUTOMATIC"
+  #If upgrade system is set to "UPGRADE", set the price of the command per row. Set -1 for disable price system.
+  price-per-upgrade: 200

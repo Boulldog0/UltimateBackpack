@@ -1,0 +1,12 @@
+name: UltimateBackpack
+version: 1.0.0
+author: Boulldogo
+api-version: 1.13
+main: fr.Boulldogo.UltimateBackpack.Main
+description: Minecraft plugin for add Backpack feature in minecrafts servers
+softdepend:
+  - Vault
+  - WorldGuard
+commands:
+  backpack:
+   description: "Main command"
