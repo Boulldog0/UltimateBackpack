@@ -11,11 +11,15 @@ public class BackpackItemAddEvent extends Event {
 	private final Player player;
 	private final int slot;
 	private final ItemStack stack;
+	private final String ownerName;
+	private final boolean playerEditInAdmin;
 	
-	public BackpackItemAddEvent(Player player, int slot, ItemStack item) {
+	public BackpackItemAddEvent(Player player, int slot, ItemStack item, String ownerName, boolean playerEditInAdmin) {
 		this.player = player;
 		this.slot = slot;
 		this.stack = item;
+		this.ownerName = ownerName;
+		this.playerEditInAdmin = playerEditInAdmin;
 	}
 	
 	public Player getPlayer() {
@@ -28,6 +32,14 @@ public class BackpackItemAddEvent extends Event {
 	
 	public ItemStack getItemStack() {
 		return stack;
+	}
+	
+	public String getOwnerName() {
+		return ownerName;
+	}
+	
+	public boolean playerEditInAdmin() {
+		return playerEditInAdmin;
 	}
 
 	@Override

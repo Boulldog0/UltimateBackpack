@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -33,7 +34,6 @@ import fr.Boulldogo.UltimateBackpack.Commands.BackpackCommand;
 import fr.Boulldogo.UltimateBackpack.Utils.DataUtils;
 import fr.Boulldogo.UltimateBackpack.Utils.PermissionUtils;
 import fr.Boulldogo.UltimateBackpack.Utils.SkullCreator;
-import fr.Boulldogo.UltimateBackpack.Utils.WorldGuardUtils;
 import net.md_5.bungee.api.ChatColor;
 
 public class PlayerListener implements Listener {
@@ -41,13 +41,11 @@ public class PlayerListener implements Listener {
     private final Main plugin;
     private final DataUtils dataUtils;
     private final BackpackCommand backpackCommand;
-    private final WorldGuardUtils worldGuardUtils;
     
     public PlayerListener(Main plugin) {
         this.plugin = plugin;
         this.dataUtils = new DataUtils(plugin);
         this.backpackCommand = new BackpackCommand(plugin);
-        this.worldGuardUtils = new WorldGuardUtils();
     }
     
     @EventHandler
@@ -136,7 +134,7 @@ public class PlayerListener implements Listener {
         int data = plugin.getConfig().getInt("item.item-data");
 
         for(ItemStack item : player.getInventory().getContents()) {
-            if(item != null && item.getType() == material && item.getDurability() ==(short) data) {
+            if(item != null && item.getType() == material && item.getDurability() == (short) data) {
                 return true;
             }
         }
@@ -166,7 +164,7 @@ public class PlayerListener implements Listener {
                     return;
                 }
 
-                if(data > 0 && stack.getDurability() !=(short) data) {
+                if(data > 0 && stack.getDurability() != (short) data) {
                     return;
                 }
 
@@ -198,63 +196,66 @@ public class PlayerListener implements Listener {
         PermissionUtils pUtils = new PermissionUtils();
 
         if(stack != null) {
-            String backpackItem = plugin.getConfig().getString("item.backpack-item");
-            int data = plugin.getConfig().getInt("item.item-data");
+        	try {
+                String backpackItem = plugin.getConfig().getString("item.backpack-item");
+                int data = plugin.getConfig().getInt("item.item-data");
 
-            if(!stack.getType().toString().equals(backpackItem)) {
-                return;
-            }
-
-            if(data > 0 && stack.getData().getData() !=(short) data) {
-                return;
-            }
-
-            if(plugin.getConfig().getBoolean("item.can-have-custom-name")) {
-                ItemMeta meta = stack.getItemMeta();
-                if(meta == null || !translateString(meta.getDisplayName()).equals(translateString(plugin.getConfig().getString("item.custom-name")))) {
+                if(!stack.getType().toString().equals(backpackItem)) {
                     return;
                 }
-            }
-            
-            if(!plugin.getConfig().getStringList("disable-backpack-worlds").isEmpty() && plugin.getConfig().getStringList("disable-backpack-worlds").contains(player.getWorld().getName())) {
-            	if(!player.hasPermission(pUtils.BYPASS_WORLD_LIMITATION)) {
-                    player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-world")));
+
+                if(data > 0 && stack.getData().getData() != (short) data) {
+                    return;
+                }
+
+                if(plugin.getConfig().getBoolean("item.can-have-custom-name")) {
+                    ItemMeta meta = stack.getItemMeta();
+                    if(meta == null || !translateString(meta.getDisplayName()).equals(translateString(plugin.getConfig().getString("item.custom-name")))) {
+                        return;
+                    }
+                }
+                
+                if(!plugin.getConfig().getStringList("disable-backpack-worlds").isEmpty() && plugin.getConfig().getStringList("disable-backpack-worlds").contains(player.getWorld().getName())) {
+                	if(!player.hasPermission(pUtils.BYPASS_WORLD_LIMITATION)) {
+                        player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-world")));
+                        e.setCancelled(true);
+                        return;
+                	}
+                }
+                
+                if(plugin.isWorldguardEnable() && !plugin.getConfig().getStringList("disable-backpack-regions").isEmpty()) {
+                	if(!player.hasPermission(pUtils.BYPASS_REGION_LIMITATION)) {
+                    	for(String s : plugin.getConfig().getStringList("disable-backpack-regions")) {
+                    		if(plugin.getPlayerRegions(player).contains(s)) {
+                                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-region")));
+                                return;
+                    		}
+                    	}
+                	}
+                }
+                
+                if(plugin.playerHasHitCooldown(player)) {
+                    e.setCancelled(true);
+                    player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-hit-cooldown").replace("%s", String.valueOf(plugin.getPlayerHitCooldown(player)))));
+                    return;
+                }
+
+                if(plugin.isPlayerRestricted(player)) {
+                    player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-restricted")));
                     e.setCancelled(true);
                     return;
-            	}
-            }
-            
-            if(plugin.isWorldguardEnable() && !plugin.getConfig().getStringList("disable-backpack-regions").isEmpty()) {
-            	if(!player.hasPermission(pUtils.BYPASS_REGION_LIMITATION)) {
-                	for(String s : plugin.getConfig().getStringList("disable-backpack-regions")) {
-                		if(worldGuardUtils.getRegionsForPlayer(player).contains(s)) {
-                            player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-region")));
-                            e.setCancelled(true);
-                            return;
-                		}
-                	}
-            	}
-            }
-            
-            if(plugin.playerHasHitCooldown(player)) {
-                e.setCancelled(true);
-                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-hit-cooldown").replace("%s", String.valueOf(plugin.getPlayerHitCooldown(player)))));
-                return;
-            }
-
-            if(plugin.isPlayerRestricted(player)) {
-                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-restricted")));
-                e.setCancelled(true);
-                return;
-            } else {
-                if(!plugin.getConfig().getString("sound-on-open").isEmpty()) {
-                    Sound sound = Sound.valueOf(plugin.getConfig().getString("sound-on-open"));
-                    player.playSound(player.getLocation(), sound, 1, 1);
+                } else {
+                    if(!plugin.getConfig().getString("sound-on-open").isEmpty()) {
+                        Sound sound = Sound.valueOf(plugin.getConfig().getString("sound-on-open"));
+                        player.playSound(player.getLocation(), sound, 1, 1);
+                    }
+                    backpackCommand.openBackpackGui(player);
+                    e.setCancelled(true);
+                    return;
                 }
-                backpackCommand.openBackpackGui(player);
-                e.setCancelled(true);
-                return;
-            }
+             } catch(Exception ex) {
+                 player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.error")));
+        	}
         }
     }
 
@@ -262,8 +263,8 @@ public class PlayerListener implements Listener {
     public void onPlayerReceiveDamage(EntityDamageByEntityEvent e) {
         if(e.getEntity() instanceof Player && e.getDamager() instanceof Player) {
             if(!plugin.getConfig().getBoolean("hit-cooldown.enable")) return;
-            Player victim =(Player) e.getEntity();
-            Player attacker =(Player) e.getDamager();
+            Player victim = (Player) e.getEntity();
+            Player attacker = (Player) e.getDamager();
             
             plugin.addPlayerCooldown(attacker);
             plugin.addPlayerCooldown(victim);
@@ -272,15 +273,14 @@ public class PlayerListener implements Listener {
     
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
-        Player player =(Player) e.getWhoClicked();
+        Player player = (Player) e.getWhoClicked();
         String prefix = plugin.getConfig().getBoolean("use-prefix") ? translateString(plugin.getConfig().getString("prefix")) : "";
         String personalBackpackTitle = translateString(plugin.getConfig().getString("backpack-name").replace("%p", player.getName()));
         String otherBackpackTitle = translateString(plugin.getConfig().getString("backpack-other-name").replace("%p", ""));
 
         if(e.getInventory().getHolder() == null &&(e.getView().getTitle().equals(personalBackpackTitle) || e.getView().getTitle().startsWith(otherBackpackTitle))) {
             int slot = e.getRawSlot();
-            UUID ownerUUID = getOwnerUUIDFromTitle(e.getView().getTitle(), player);
-            Player owner = Bukkit.getPlayer(ownerUUID);
+            UUID ownerUUID = plugin.isPlayerAdminOpenedBackpack(player) ? plugin.getBackpackOpenedByAdmin(player) : player.getUniqueId();
 
             if(slot < e.getInventory().getSize() && e.getCurrentItem() != null && e.getCursor() != null) {
                 ItemStack cursorItem = e.getCursor();
@@ -295,9 +295,9 @@ public class PlayerListener implements Listener {
                 Bukkit.getScheduler().runTaskLater(plugin,() -> {
                     ItemStack item = e.getInventory().getItem(slot);
                     if(item != null) {
-                        if(isBlacklistedItem(item, owner)) {
-                        	processRegiveItem(owner, item);
-                            owner.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.item-blacklist")));
+                        if(isBlacklistedItem(item, player)) {
+                            player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.item-blacklist")));
+                            e.setCancelled(true);
                             return;
                         }
                         
@@ -305,63 +305,66 @@ public class PlayerListener implements Listener {
                         int data = plugin.getConfig().getInt("item.item-data");
 
                         if(item.getType().toString().equals(backpackItem)) {
-                            if((data > 0 && item.getDurability() ==(short) data) || data <= 0) {
+                            if((data > 0 && item.getDurability() == (short) data) || data <= 0) {
                                 if(plugin.getConfig().getBoolean("item.can-have-custom-name")) {
                                     ItemMeta meta = item.getItemMeta();
                                     if(meta == null || !translateString(meta.getDisplayName()).equals(translateString(plugin.getConfig().getString("item.custom-name")))) {
-                                    	processRegiveItem(owner, item);
-                                        owner.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
+                                        player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
+                                        e.setCancelled(true);
                                         return;
                                     }
                                 } else {
-                                	processRegiveItem(owner, item);
-                                    owner.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
+                                    player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
+                                    e.setCancelled(true);
                                     return;
                                 }
                             }
                         }
-                        dataUtils.addItem(item, owner, slot);
+                        dataUtils.addItem(item, ownerUUID, slot, player);
                     } else {
-                        dataUtils.removeItem(owner, slot);
+                        dataUtils.removeItem(ownerUUID, slot, player);
                     }
                 }, 1L);
             }
         }
     }
     
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryClose(InventoryCloseEvent e) {
-        Player player =(Player) e.getPlayer();
+        Player player = (Player) e.getPlayer();
         String personalBackpackTitle = translateString(plugin.getConfig().getString("backpack-name").replace("%p", player.getName()));
-        String otherBackpackTitle = translateString(plugin.getConfig().getString("backpack-other-name").replace("%p", ""));
         
-        if(e.getInventory().getHolder() == null &&(e.getView().getTitle().equals(personalBackpackTitle) || e.getView().getTitle().startsWith(otherBackpackTitle))) {
-            UUID ownerUUID = getOwnerUUIDFromTitle(e.getView().getTitle(), player);
-            Player owner = Bukkit.getPlayer(ownerUUID);
+        if(e.getInventory().getHolder() == null && e.getView().getTitle().equals(personalBackpackTitle)) {            
+            if(!plugin.getConfig().getString("sound-on-close").equals("")) {
+                Sound sound = Sound.valueOf(plugin.getConfig().getString("sound-on-close"));
+                player.playSound(player.getLocation(), sound, 1, 1);
+            }
+            
+            plugin.removeOpenBackpack(player);
+            saveBackpackData(e.getInventory(), player.getUniqueId(), player);
+        } else if(plugin.isPlayerAdminOpenedBackpack(player)) {
+            UUID ownerUUID = plugin.getBackpackOpenedByAdmin(player);
             
             if(!plugin.getConfig().getString("sound-on-close").equals("")) {
                 Sound sound = Sound.valueOf(plugin.getConfig().getString("sound-on-close"));
                 player.playSound(player.getLocation(), sound, 1, 1);
             }
             
-            if(player != owner) {
-                plugin.removeRestrictedPlayer(owner);
-            } else {
-                plugin.removeOpenBackpack(player);
-            }
-
-            saveBackpackData(e.getInventory(), owner);
+            saveBackpackData(e.getInventory(), ownerUUID, player);
+            
+            plugin.removeRestrictedPlayer(Bukkit.getOfflinePlayer(ownerUUID));
+            plugin.removeAdminPlayerOpenedBackpack(player);
         }
     }
 
-    private void saveBackpackData(Inventory inventory, Player owner) {
+    private void saveBackpackData(Inventory inventory, UUID ownerUUID, Player saver) {
         String prefix = plugin.getConfig().getBoolean("use-prefix") ? translateString(plugin.getConfig().getString("prefix")) : "";
         for(int slot = 0; slot < inventory.getSize(); slot++) {
             ItemStack item = inventory.getItem(slot);
             if(item != null) {
-                if(isBlacklistedItem(item, owner)) {
-                	processRegiveItem(owner, item);
-                    owner.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.item-blacklist")));
+                if(isBlacklistedItem(item, saver)) {
+                	processRegiveItem(saver, item);
+                	saver.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.item-blacklist")));
                     continue;
                 }
                 
@@ -369,24 +372,24 @@ public class PlayerListener implements Listener {
                 int data = plugin.getConfig().getInt("item.item-data");
 
                 if(item.getType().toString().equals(backpackItem)) {
-                    if((data > 0 && item.getDurability() ==(short) data) || data <= 0) {
+                    if((data > 0 && item.getData().getData() == (short) data) || data <= 0) {
                         if(plugin.getConfig().getBoolean("item.can-have-custom-name")) {
                             ItemMeta meta = item.getItemMeta();
                             if(meta == null || !translateString(meta.getDisplayName()).equals(translateString(plugin.getConfig().getString("item.custom-name")))) {
-                            	processRegiveItem(owner, item);
-                                owner.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
+                            	processRegiveItem(saver, item);
+                            	saver.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
                                 continue;
                             }
                         } else {
-                        	processRegiveItem(owner, item);
-                            owner.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
+                        	processRegiveItem(saver, item);
+                        	saver.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.cant-put-backpack-into-backpack")));
                             continue;
                         }
                     }
                 }
-                dataUtils.addItem(item, owner, slot);
+                dataUtils.addItem(item, ownerUUID, slot, saver);
             } else {
-                dataUtils.removeItem(owner, slot);
+                dataUtils.removeItem(ownerUUID, slot, saver);
             }
         }
     }
@@ -436,21 +439,6 @@ public class PlayerListener implements Listener {
             return true;
         }
         return false;
-    }
-    
-    @SuppressWarnings("deprecation")
-    private UUID getOwnerUUIDFromTitle(String title, Player opener) {
-        if(title.startsWith(translateString(plugin.getConfig().getString("backpack-other-name").replace("%p", "")))) {
-            String playerName = title.replace(translateString(plugin.getConfig().getString("backpack-other-name").replace("%p", "")), "");
-            Player owner = Bukkit.getPlayer(playerName);
-            if(owner != null) {
-                return owner.getUniqueId();
-            } else {
-                return Bukkit.getOfflinePlayer(playerName).getUniqueId();
-            }
-        } else {
-            return opener.getUniqueId();
-        }
     }
 
     public String translateString(String s) {

@@ -24,7 +24,6 @@ import fr.Boulldogo.UltimateBackpack.Main;
 import fr.Boulldogo.UltimateBackpack.Utils.DataUtils;
 import fr.Boulldogo.UltimateBackpack.Utils.PermissionUtils;
 import fr.Boulldogo.UltimateBackpack.Utils.SkullCreator;
-import fr.Boulldogo.UltimateBackpack.Utils.WorldGuardUtils;
 import net.md_5.bungee.api.ChatColor;
 import net.milkbowl.vault.economy.Economy;
 
@@ -32,12 +31,10 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
 
     private final Main plugin;
     private final DataUtils dataUtils;
-    private final WorldGuardUtils worldGuardUtils;
 
     public BackpackCommand(Main plugin) {
         this.plugin = plugin;
         this.dataUtils = new DataUtils(plugin);
-        this.worldGuardUtils = new WorldGuardUtils();
     }
 
     @SuppressWarnings("deprecation")
@@ -76,28 +73,28 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
                     player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.no-permission")));
                     return true;
                 }
- 
+
                 if(!plugin.getConfig().getStringList("disable-backpack-worlds").isEmpty() && plugin.getConfig().getStringList("disable-backpack-worlds").contains(player.getWorld().getName())) {
-                	if(!player.hasPermission(pUtils.BYPASS_WORLD_LIMITATION)) {
+                    if(!player.hasPermission(pUtils.BYPASS_WORLD_LIMITATION)) {
                         player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-world")));
                         return true;
-                	}
+                    }
                 }
-                
+
                 if(plugin.isWorldguardEnable() && !plugin.getConfig().getStringList("disable-backpack-regions").isEmpty()) {
                 	if(!player.hasPermission(pUtils.BYPASS_REGION_LIMITATION)) {
                     	for(String s : plugin.getConfig().getStringList("disable-backpack-regions")) {
-                    		if(worldGuardUtils.getRegionsForPlayer(player).contains(s)) {
+                    		if(plugin.getPlayerRegions(player).contains(s)) {
                                 player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-region")));
                                 return true;
                     		}
                     	}
                 	}
                 }
-                
+
                 if(plugin.playerHasHitCooldown(player)) {
                     player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-hit-cooldown").replace("%s", String.valueOf(plugin.getPlayerHitCooldown(player)))));
-                	return true;
+                    return true;
                 }
 
                 if(plugin.isPlayerRestricted(player)) {
@@ -120,36 +117,36 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
 
-                UUID playerUUID = null;
-
                 OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(playerName);
-                if(targetPlayer != null) {
-                    playerUUID = targetPlayer.getUniqueId();
-                } 
-
-                if(playerUUID == null) {
+                if(targetPlayer == null || !targetPlayer.hasPlayedBefore()) {
                     player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.unknow-player")));
                     return true;
                 }
+
+                UUID playerUUID = targetPlayer.getUniqueId();
                 
-                if(plugin.isPlayerRestricted((Player) targetPlayer)) {
+                if(plugin.isPlayerRestricted(player)) {
                     player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-already-inspected")));
                     return true;
                 }
 
-                if(plugin.isOpenBackpack(player)) {
+                if(plugin.isOpenBackpack(targetPlayer)) {
                     Player opener = Bukkit.getPlayer(playerUUID);
                     if(opener != null && opener.isOnline()) {
                         opener.closeInventory();
-                        plugin.removeOpenBackpack(player);
+                        plugin.removeOpenBackpack(targetPlayer);
                         opener.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-closed-by-admin")));
+                        player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-closed-for-player").replace("%p", opener.getName())));
                     }
                 }
-                plugin.addRestrictedPlayer((Player) targetPlayer);
+                
+                plugin.addRestrictedPlayer(targetPlayer);
+                plugin.addAdminPlayerOpenedBackpack(player, playerUUID);
                 openOtherBackpackGui(playerUUID, player);
             }
             return true;
-        } if(subCommand.equals("upgrade")) {
+        } 
+        if(subCommand.equals("upgrade")) {
             if(!plugin.getConfig().getString("upgrade.upgrade-system").equals("UPGRADE")) {
                 player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.upgrade-system-disable")));
                 return true;
@@ -210,26 +207,34 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            Material material = Material.valueOf(plugin.getConfig().getString("item.backpack-item"));
+            Material material = Material.matchMaterial(plugin.getConfig().getString("item.backpack-item"));
+            
+            if (material == null) {
+                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.invalid-material")));
+                return true;
+            }
+
             int data = plugin.getConfig().getInt("item.item-data");
             String customName = plugin.getConfig().getString("item.custom-name");
             List<String> customLore = plugin.getConfig().getStringList("item.custom-lore");
 
-            ItemStack item = new ItemStack(material, 1,(short) data);
+            ItemStack item = new ItemStack(material, 1, (short) data);
             ItemMeta meta = item.getItemMeta();
 
-            if(customName != null && !customName.isEmpty()) {
-                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', customName));
-            }
-
-            if(customLore != null && !customLore.isEmpty()) {
-                for(int i = 0; i < customLore.size(); i++) {
-                    customLore.set(i, ChatColor.translateAlternateColorCodes('&', customLore.get(i)));
+            if (meta != null) {
+                if(customName != null && !customName.isEmpty()) {
+                    meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', customName));
                 }
-                meta.setLore(customLore);
-            }
 
-            item.setItemMeta(meta);
+                if(customLore != null && !customLore.isEmpty()) {
+                    for(int i = 0; i < customLore.size(); i++) {
+                        customLore.set(i, ChatColor.translateAlternateColorCodes('&', customLore.get(i)));
+                    }
+                    meta.setLore(customLore);
+                }
+
+                item.setItemMeta(meta);
+            }
 
             if(material == Material.PLAYER_HEAD) {
                 String textureBase64 = plugin.getConfig().getString("item.head-texture-base64");
@@ -249,8 +254,13 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
                 }
             }
 
-            player.getInventory().addItem(item);
-            player.sendMessage(prefix + " " + translateString(plugin.getConfig().getString("messages.item-given")));
+            try {
+                player.getInventory().addItem(item);
+                player.sendMessage(prefix + " " + translateString(plugin.getConfig().getString("messages.item-given")));
+            } catch (Exception e) {
+                plugin.getLogger().severe("Error while giving item: " + e.getMessage() + " | THIS IS NOT A BUG ! DONT REPORT IT TO DEVLOPERS !");
+                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.item-give-error")));
+            }
         }
 
         return false;
@@ -284,6 +294,10 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
     public void openBackpackGui(Player player) {
         UUID playerUUID = player.getUniqueId();
         plugin.addOpenBackpack(player);
+        
+        if(player.getOpenInventory() != null) {
+        	player.closeInventory();
+        }
 
         File folder = new File(plugin.getDataFolder(), "players-datas");
         if(!folder.exists()) {
@@ -325,7 +339,7 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
 
         for(int slot = 0; slot < rows * 9; slot++) {
             if(config.contains("items." + slot)) {
-                ItemStack item = dataUtils.getStackOnSlot(player, slot);
+                ItemStack item = dataUtils.getStackOnSlot(player.getUniqueId(), slot);
                 backpack.setItem(slot, item);
             }
         }
@@ -334,11 +348,10 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
     }
 
     public void openOtherBackpackGui(UUID playerUUID, Player opener) {
-        Player player = Bukkit.getPlayer(playerUUID);
-        if(player != null && player.isOnline() && plugin.isOpenBackpack(player)) {
-            player.closeInventory();
-            plugin.removeOpenBackpack(player);
-            player.sendMessage(translateString(plugin.getConfig().getString("messages.backpack-closed-by-admin")));
+        OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(playerUUID);
+        
+        if(opener.getOpenInventory() != null) {
+        	opener.closeInventory();
         }
 
         File folder = new File(plugin.getDataFolder(), "players-datas");
@@ -354,11 +367,11 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         int rows = config.getInt("backpack-row", 1);
 
-        Inventory backpack = Bukkit.createInventory(null, rows * 9, translateString(plugin.getConfig().getString("backpack-other-name").replace("%p", player.getName())));
+        Inventory backpack = Bukkit.createInventory(null, rows * 9, translateString(plugin.getConfig().getString("backpack-other-name").replace("%p", targetPlayer.getName())));
 
         for(int slot = 0; slot < rows * 9; slot++) {
             if(config.contains("items." + slot)) {
-                ItemStack item = dataUtils.getStackOnSlot(player, slot);
+                ItemStack item = dataUtils.getStackOnSlot(playerUUID, slot);
                 backpack.setItem(slot, item);
             }
         }

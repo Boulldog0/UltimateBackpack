@@ -23,43 +23,21 @@ public class DataUtils {
         this.plugin = plugin;
     }
 
-    public void addItem(ItemStack item, Player player, int slot) {
-        UUID playerUUID = player.getUniqueId();
-
-        File folder = new File(plugin.getDataFolder(), "players-datas");
-        if(!folder.exists()) {
-            folder.mkdir();
-        }
-
-        File file = new File(folder, playerUUID + ".yml");
-        if(!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch(IOException e1) {
-                e1.printStackTrace();
-            }
-        }
-
+    public void addItem(ItemStack item, UUID playerUUID, int slot, Player saver) {
+        File file = getPlayerDataFile(playerUUID);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("items." + slot, serializeItemStack(item));
         try {
             config.save(file);
-            BackpackItemAddEvent event = new BackpackItemAddEvent(player, slot, item);
+            BackpackItemAddEvent event = new BackpackItemAddEvent(Bukkit.getPlayer(playerUUID), slot, item, Bukkit.getOfflinePlayer(playerUUID).getName(), playerUUID.equals(saver.getUniqueId()));
             Bukkit.getServer().getPluginManager().callEvent(event);
         } catch(IOException e) {
             e.printStackTrace();
         }
     }
 
-    public ItemStack getStackOnSlot(Player player, int slot) {
-        UUID playerUUID = player.getUniqueId();
-
-        File folder = new File(plugin.getDataFolder(), "players-datas");
-        if(!folder.exists()) {
-            folder.mkdir();
-        }
-
-        File file = new File(folder, playerUUID + ".yml");
+    public ItemStack getStackOnSlot(UUID playerUUID, int slot) {
+        File file = getPlayerDataFile(playerUUID);
         if(!file.exists()) {
             return null;
         }
@@ -70,34 +48,28 @@ public class DataUtils {
         return section != null ? deserializeItemStack(section.getValues(false)) : null;
     }
 
-    public void removeItem(Player player, int slot) {
-        UUID playerUUID = player.getUniqueId();
-
-        File folder = new File(plugin.getDataFolder(), "players-datas");
-        if(!folder.exists()) {
-            folder.mkdir();
-        }
-        
-        ItemStack stack = getStackOnSlot(player, slot);
-
-        File file = new File(folder, playerUUID + ".yml");
-        if(!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch(IOException e1) {
-                e1.printStackTrace();
-            }
-        }
+    public void removeItem(UUID playerUUID, int slot, Player saver) {
+        File file = getPlayerDataFile(playerUUID);
+        ItemStack stack = getStackOnSlot(playerUUID, slot);
 
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("items." + slot, null);
         try {
             config.save(file);
-            BackpackItemRemoveEvent event = new BackpackItemRemoveEvent(player, slot, stack);
+            BackpackItemRemoveEvent event = new BackpackItemRemoveEvent(Bukkit.getPlayer(playerUUID), slot, stack, Bukkit.getOfflinePlayer(playerUUID).getName(), playerUUID.equals(saver.getUniqueId()));
             Bukkit.getServer().getPluginManager().callEvent(event);
         } catch(IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private File getPlayerDataFile(UUID playerUUID) {
+        File folder = new File(plugin.getDataFolder(), "players-datas");
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+
+        return new File(folder, playerUUID.toString() + ".yml");
     }
 
     private Map<String, Object> serializeItemStack(ItemStack item) {

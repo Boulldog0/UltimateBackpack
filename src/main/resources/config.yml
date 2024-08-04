@@ -65,12 +65,14 @@ messages:
   item-given: '&aBackpack given with success !'
   cant-open-your-backpack: "&cYou cant open your backpack with command /backpack open 'your-pseudo' !"
   item-blacklist: "&cThis item is blacklist ! You can't put it in your backpack."
-  backpack-hit-cooldown: "&cYou have an hit cooldown. Please wait %s seconds."
+  backpack-hit-cooldown: "&cYou have an hit cooldown. Please wait %s seconds.
   item-cant-be-drop: "&cThe backpack item cant be drop !"
   backpack-disable-in-world: "&cThe backpack is disable in this world !"
   backpack-disable-in-region: "&cThe backpack is disabled in one of region where you are !"
   backpack-already-inspected: "&cThis backpack is already inspected by an other administrator !"
   cant-put-backpack-into-backpack: "&cYou cant put your backpack item into the backpack GUI !"
+  item-give-error: "&cAn error occured when trying to giving item ! Verify if the item in the configuration exists in the server ! &4THIS IS NOT A BUG !"
+  backpack-closed-for-player: "&aBackpack of %p closed !"
 
 help-message:
   - "&7------[&eBackpackPlugin Help&7]------"

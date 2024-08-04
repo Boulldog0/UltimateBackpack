@@ -7,7 +7,7 @@ import org.json.JSONObject;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class GithubUpdater {
-    private static final String GITHUB_API_URL = "https://api.github.com/repos/Boulldog0/BackpackPlugin/releases/latest";
+    private static final String GITHUB_API_URL = "https://api.github.com/repos/Boulldog0/UltimateBackpack/releases/latest";
     private JavaPlugin plugin;
 
     public GithubUpdater(JavaPlugin plugin) {
@@ -20,13 +20,13 @@ public class GithubUpdater {
             String latestVersion = getLatestVersion();
 
             if (latestVersion == null) {
-                plugin.getLogger().warning("Unable to check for updates of BackpackPlugin.");
+                plugin.getLogger().warning("Unable to check for updates of UltimateBackpack.");
                 return;
             }
 
             if (isVersionOutOfDate(currentVersion, latestVersion)) {
-                plugin.getLogger().warning("New version of plugin BackpackPlugin is available. : " + latestVersion);
-                plugin.getLogger().warning("Downloat it at :");
+                plugin.getLogger().warning("New version of plugin UltimateBackpack is available. : " + latestVersion);
+                plugin.getLogger().warning("Downloat it at : https://www.spigotmc.org/resources/ultimatebackpack-1-8-1-21.118541/");
             } else {
                 plugin.getLogger().info("BackpackPlugin plugin is up-to-date.");
             }
