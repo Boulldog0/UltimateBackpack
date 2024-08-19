@@ -26,6 +26,13 @@ public class DataUtils {
     public void addItem(ItemStack item, UUID playerUUID, int slot, Player saver) {
         File file = getPlayerDataFile(playerUUID);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+
+        ItemStack currentItem = getStackOnSlot(playerUUID, slot);
+
+        if(currentItem != null && currentItem.isSimilar(item)) {
+            return;
+        }
+        
         config.set("items." + slot, serializeItemStack(item));
         try {
             config.save(file);
@@ -52,6 +59,10 @@ public class DataUtils {
         File file = getPlayerDataFile(playerUUID);
         ItemStack stack = getStackOnSlot(playerUUID, slot);
 
+        if(stack == null) {
+            return;
+        }
+
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
         config.set("items." + slot, null);
         try {
@@ -65,7 +76,7 @@ public class DataUtils {
 
     private File getPlayerDataFile(UUID playerUUID) {
         File folder = new File(plugin.getDataFolder(), "players-datas");
-        if (!folder.exists()) {
+        if(!folder.exists()) {
             folder.mkdir();
         }
 

@@ -65,7 +65,7 @@ messages:
   item-given: '&aBackpack given with success !'
   cant-open-your-backpack: "&cYou cant open your backpack with command /backpack open 'your-pseudo' !"
   item-blacklist: "&cThis item is blacklist ! You can't put it in your backpack."
-  backpack-hit-cooldown: "&cYou have an hit cooldown. Please wait %s seconds.
+  backpack-hit-cooldown: "&cYou have an hit cooldown. Please wait %s seconds."
   item-cant-be-drop: "&cThe backpack item cant be drop !"
   backpack-disable-in-world: "&cThe backpack is disable in this world !"
   backpack-disable-in-region: "&cThe backpack is disabled in one of region where you are !"
@@ -81,6 +81,10 @@ help-message:
   - "&e- /backpack open (player) &7>> &6Open the backpack of other player"
   - "&e- /backpack upgrade &7>> &6Upgrade our backpack"
   - "&e- /backpack giveitem &7>> &6Give the backpack item"
+  
+integration:
+  watchlogs:
+   enable: true
 
 upgrade:
   #Upgrade system, set UPGRADE for use the upgrade system with command, and AUTOMATIC for upgrade automatically the player's backpack.

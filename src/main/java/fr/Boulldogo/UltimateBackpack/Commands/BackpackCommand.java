@@ -257,9 +257,11 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
             try {
                 player.getInventory().addItem(item);
                 player.sendMessage(prefix + " " + translateString(plugin.getConfig().getString("messages.item-given")));
+                return true;
             } catch (Exception e) {
                 plugin.getLogger().severe("Error while giving item: " + e.getMessage() + " | THIS IS NOT A BUG ! DONT REPORT IT TO DEVLOPERS !");
                 player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.item-give-error")));
+                return true;
             }
         }
 

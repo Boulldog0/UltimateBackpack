@@ -41,10 +41,13 @@ public class BackpackItemRemoveEvent extends Event {
 	public boolean playerEditInAdmin() {
 		return playerEditInAdmin;
 	}
-
+	
 	@Override
 	public HandlerList getHandlers() {
 		return handlers;
 	}
 
+	public static HandlerList getHandlerList() {
+		return handlers;
+	}
 }

@@ -88,6 +88,12 @@ public class PlayerListener implements Listener {
         }
 
         Material material = Material.valueOf(plugin.getConfig().getString("item.backpack-item"));
+        
+        if(material == null) {
+            plugin.getLogger().severe("Error while giving item: Item is NULL. | THIS IS NOT A BUG ! DONT REPORT IT TO DEVLOPERS !");
+            return;
+        }
+        
         int data = plugin.getConfig().getInt("item.item-data");
         String customName = plugin.getConfig().getString("item.custom-name");
         List<String> customLore = plugin.getConfig().getStringList("item.custom-lore");
@@ -126,7 +132,13 @@ public class PlayerListener implements Listener {
             }
         }
 
-        player.getInventory().addItem(item);
+        try {
+            player.getInventory().addItem(item);
+            return;
+        } catch (Exception e) {
+            plugin.getLogger().severe("Error while giving item: " + e.getMessage() + " | THIS IS NOT A BUG ! DONT REPORT IT TO DEVLOPERS !");
+            return;
+        }
     }
 
     private boolean playerHasBackpack(Player player) {

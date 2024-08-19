@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -21,12 +22,15 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
 import fr.Boulldogo.UltimateBackpack.Commands.BackpackCommand;
 import fr.Boulldogo.UltimateBackpack.Listeners.PlayerListener;
+import fr.Boulldogo.UltimateBackpack.Listeners.UltimateBackpackListener;
 import fr.Boulldogo.UltimateBackpack.Utils.GithubUpdater;
 import fr.Boulldogo.UltimateBackpack.Utils.PermissionUtils;
 import fr.Boulldogo.UltimateBackpack.Utils.YamlUpdater;
 import fr.Boulldogo.UltimateBackpack.WorldGuard.RegionManager;
 import fr.Boulldogo.UltimateBackpack.WorldGuard.WG6RegionManager;
 import fr.Boulldogo.UltimateBackpack.WorldGuard.WG7RegionManager;
+import fr.Boulldogo.WatchLogs.WatchLogsPlugin;
+import fr.Boulldogo.WatchLogs.API.WatchLogsAPI;
 import net.milkbowl.vault.economy.Economy;
 
 public class Main extends JavaPlugin {
@@ -40,6 +44,8 @@ public class Main extends JavaPlugin {
     private PermissionUtils pUtils;
     private boolean worldGuardEnable;
     private RegionManager regionManager;
+    private boolean watchLogsEnable;
+    private WatchLogsPlugin watchLogsPlugin;
 
     public void onEnable() {
         saveDefaultConfig();
@@ -70,6 +76,22 @@ public class Main extends JavaPlugin {
             this.getLogger().warning("WorldGuard or WorldEdit not found! Regions features are disabled.");
             this.worldGuardEnable = false;
         }
+        
+        if(this.getServer().getPluginManager().getPlugin("WatchLogs") != null && this.getConfig().getBoolean("integration.watchlogs.enable")) {
+        	this.watchLogsPlugin = WatchLogsAPI.getWatchLogsPlugin();
+        	this.watchLogsEnable = true;
+        	
+        	WatchLogsAPI api = new WatchLogsAPI(watchLogsPlugin);
+        	String v = watchLogsPlugin.getVersion();
+        	
+        	this.getLogger().info("WatchLogs version found : " + v + ". UltimateBackpack starts with WatchLogs API (Advanced Logging).");
+        	
+        	api.addCustomAction(this, "backpack-item-add", "Backpack Item Add");
+        	api.addCustomAction(this, "backpack-item-remove", "Backpack Item Remove");
+        } else {
+            this.getLogger().warning("WatchLogs not found! Advanced logging features are disabled.");
+        	this.watchLogsEnable = false;
+        }
 
         YamlUpdater updater = new YamlUpdater(this);
         String[] filesToUpdate = {"config.yml"};
@@ -88,12 +110,21 @@ public class Main extends JavaPlugin {
         }
 
         this.getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        this.getServer().getPluginManager().registerEvents(new UltimateBackpackListener(this, watchLogsPlugin), this);
         this.getCommand("backpack").setExecutor(new BackpackCommand(this));
     }
 
     public void onDisable() {
         String version = this.getDescription().getVersion();
         this.getLogger().info("UltimateBackpack v" + version + " by Boulldogo loaded with success !");
+    }
+    
+    public boolean isWatchLogsEnable() {
+    	return watchLogsEnable;
+    }
+    
+    public Plugin getWatchLogsPlugin() {
+    	return watchLogsPlugin;
     }
 
     public List<String> getPlayerRegions(Player player) {
