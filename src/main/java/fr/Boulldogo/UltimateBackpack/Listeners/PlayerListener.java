@@ -208,66 +208,62 @@ public class PlayerListener implements Listener {
         PermissionUtils pUtils = new PermissionUtils();
 
         if(stack != null) {
-        	try {
-                String backpackItem = plugin.getConfig().getString("item.backpack-item");
-                int data = plugin.getConfig().getInt("item.item-data");
+            String backpackItem = plugin.getConfig().getString("item.backpack-item");
+            int data = plugin.getConfig().getInt("item.item-data");
 
-                if(!stack.getType().toString().equals(backpackItem)) {
+            if(!stack.getType().toString().equals(backpackItem)) {
+                return;
+            }
+
+            if(data > 0 && stack.getData().getData() != (short) data) {
+                return;
+            }
+
+            if(plugin.getConfig().getBoolean("item.can-have-custom-name")) {
+                ItemMeta meta = stack.getItemMeta();
+                if(meta == null || !translateString(meta.getDisplayName()).equals(translateString(plugin.getConfig().getString("item.custom-name")))) {
                     return;
                 }
-
-                if(data > 0 && stack.getData().getData() != (short) data) {
+            }
+            
+            if(!plugin.getConfig().getStringList("disable-backpack-worlds").isEmpty() && plugin.getConfig().getStringList("disable-backpack-worlds").contains(player.getWorld().getName())) {
+            	if(!player.hasPermission(pUtils.BYPASS_WORLD_LIMITATION)) {
+                    player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-world")));
+                    e.setCancelled(true);
                     return;
-                }
-
-                if(plugin.getConfig().getBoolean("item.can-have-custom-name")) {
-                    ItemMeta meta = stack.getItemMeta();
-                    if(meta == null || !translateString(meta.getDisplayName()).equals(translateString(plugin.getConfig().getString("item.custom-name")))) {
-                        return;
-                    }
-                }
-                
-                if(!plugin.getConfig().getStringList("disable-backpack-worlds").isEmpty() && plugin.getConfig().getStringList("disable-backpack-worlds").contains(player.getWorld().getName())) {
-                	if(!player.hasPermission(pUtils.BYPASS_WORLD_LIMITATION)) {
-                        player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-world")));
-                        e.setCancelled(true);
-                        return;
+            	}
+            }
+            
+            if(plugin.isWorldguardEnable() && !plugin.getConfig().getStringList("disable-backpack-regions").isEmpty()) {
+            	if(!player.hasPermission(pUtils.BYPASS_REGION_LIMITATION)) {
+                	for(String s : plugin.getConfig().getStringList("disable-backpack-regions")) {
+                		if(plugin.getPlayerRegions(player).contains(s)) {
+                            player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-region")));
+                            return;
+                		}
                 	}
-                }
-                
-                if(plugin.isWorldguardEnable() && !plugin.getConfig().getStringList("disable-backpack-regions").isEmpty()) {
-                	if(!player.hasPermission(pUtils.BYPASS_REGION_LIMITATION)) {
-                    	for(String s : plugin.getConfig().getStringList("disable-backpack-regions")) {
-                    		if(plugin.getPlayerRegions(player).contains(s)) {
-                                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-disable-in-region")));
-                                return;
-                    		}
-                    	}
-                	}
-                }
-                
-                if(plugin.playerHasHitCooldown(player)) {
-                    e.setCancelled(true);
-                    player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-hit-cooldown").replace("%s", String.valueOf(plugin.getPlayerHitCooldown(player)))));
-                    return;
-                }
+            	}
+            }
+            
+            if(plugin.playerHasHitCooldown(player)) {
+                e.setCancelled(true);
+                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-hit-cooldown").replace("%s", String.valueOf(plugin.getPlayerHitCooldown(player)))));
+                return;
+            }
 
-                if(plugin.isPlayerRestricted(player)) {
-                    player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-restricted")));
-                    e.setCancelled(true);
-                    return;
-                } else {
-                    if(!plugin.getConfig().getString("sound-on-open").isEmpty()) {
-                        Sound sound = Sound.valueOf(plugin.getConfig().getString("sound-on-open"));
-                        player.playSound(player.getLocation(), sound, 1, 1);
-                    }
-                    backpackCommand.openBackpackGui(player);
-                    e.setCancelled(true);
-                    return;
+            if(plugin.isPlayerRestricted(player)) {
+                player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.backpack-restricted")));
+                e.setCancelled(true);
+                return;
+            } else {
+                if(!plugin.getConfig().getString("sound-on-open").isEmpty()) {
+                    Sound sound = Sound.valueOf(plugin.getConfig().getString("sound-on-open"));
+                    player.playSound(player.getLocation(), sound, 1, 1);
                 }
-             } catch(Exception ex) {
-                 player.sendMessage(prefix + translateString(plugin.getConfig().getString("messages.error")));
-        	}
+                backpackCommand.openBackpackGui(player);
+                e.setCancelled(true);
+                return;
+            }
         }
     }
 

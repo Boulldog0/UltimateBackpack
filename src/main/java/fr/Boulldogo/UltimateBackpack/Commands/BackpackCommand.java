@@ -236,7 +236,7 @@ public class BackpackCommand implements CommandExecutor, TabCompleter {
                 item.setItemMeta(meta);
             }
 
-            if(material == Material.PLAYER_HEAD) {
+            if(material.toString().equals("PLAYER_HEAD") || material.toString().equals("SKULL") || material.toString().equals("PLAYER_SKULL")) {
                 String textureBase64 = plugin.getConfig().getString("item.head-texture-base64");
                 if(textureBase64 != null && !textureBase64.isEmpty()) {
                     SkullCreator creator = new SkullCreator();
